@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% from 'base.html' import input as input_field%}
+{% block title %}Tasks{% endblock %}
+{% block head %}
+    {{ super() }}
+    <style type="text/css">
+        .important { color: #336699; }
+    </style>
+{% endblock %}
+{% block content %}
+    <h1>Tasks</h1><a href="/">go back</a>
+    <hr>
+    {% for item in tasks -%}
+        {{ item }}
+        <form action="/validate" method="post">
+            <input type="hidden" name="id" value={{item.id}}>
+            <input type="hidden" name="data_json" value={{item.data_json}}>
+            <input type="submit" value="validate"/>
+        </form>
+    {%- endfor %}
+{% endblock %}

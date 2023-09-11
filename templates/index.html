@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% from 'base.html' import input as input_field%}
+{% block title %}Index{% endblock %}
+{% block head %}
+    {{ super() }}
+    <style type="text/css">
+        .important { color: #336699; }
+    </style>
+{% endblock %}
+{% block content %}
+    <h1>Index</h1><a href="/tasks">tasks</a>{% if name == None %}<a href="/login">login</a>{% endif %}
+    <p class="important">
+      Welcome to homepage{% if name != None %}, {{ name }}{% endif %}.
+    </p>
+    <hr>
+    {% if name != None %}
+        <p>user hash</p>
+        {{ user_hash }}
+        <hr>
+        <p>balance</p>
+        {{ coins }} coins
+        <hr>
+        <p>send coins</p>
+        <form action="/send" method="post">
+            <p>{{ input_field('to_hash') }}</p>
+            <p>{{ input_field('value', type='numeric') }}</p>
+            <input type="submit" value="send"/>
+        </form>
+    {% endif %}
+{% endblock %}

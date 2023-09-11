@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% from 'base.html' import input as input_field%}
+{% block title %}Login{% endblock %}
+{% block head %}
+    {{ super() }}
+{% endblock %}
+{% block content %}
+    <h1>Login</h1>
+    <form action="/login" method="post">
+        <p>{{ input_field('username') }}</p>
+        <p>{{ input_field('password', type='password') }}</p>
+        <input type="submit" value="enter"/>
+    </form>
+    {% if error != None %}{{ error }}{% endif %}.
+{% endblock %}

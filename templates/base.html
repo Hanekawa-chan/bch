@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    {% block head %}
+    <link rel="stylesheet" href="style.css" />
+    <title>{% block title %}{% endblock %}</title>
+    {% endblock %}
+</head>
+<body>
+    <div id="content">{% block content %}{% endblock %}</div>
+<!--    <div id="footer">-->
+<!--        {% block footer %}-->
+<!--        &copy; Copyright 2008 by <a href="http://domain.invalid/">you</a>.-->
+<!--        {% endblock %}-->
+<!--    </div>-->
+</body>
+</html>
+{% macro input(name, value='', type='text', size=20) -%}
+<label>
+    {{name}}
+    <input type="{{ type }}" name="{{ name }}" value="{{
+        value|e }}" size="{{ size }}">
+</label>
+{%- endmacro %}
