@@ -1,7 +1,11 @@
 import json
 import threading
 import time
+import uuid
+import urllib3
+from turbo_flask import Turbo
 
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 from blockchain import BlockChain
 from flask import Flask, render_template, request, redirect, make_response
 
@@ -29,8 +33,38 @@ def loop():
                     validate_task(id, b, data_json)
 
 
-thread_one = threading.Thread(target=loop)
-thread_one.start()
+def ddos_loop():
+    while True:
+        myuuid = uuid.uuid4()
+        b = BlockChain(username=str(myuuid), password=str(myuuid),
+                       base_url='https://b1.ahmetshin.com/restapi/')
+        b.register()
+        time.sleep(0.1)
+        data = {
+            'type_task': 'send_coins',
+            'from_hach': b.hach_user,
+            'to_hach': '0973b965a7834d82e8ea50825a54cdeca08fda0911a1c224c06e8d08060ebdb6',
+            'count_coins': 100
+        }
+        print('data', data)
+        print(b.send_task(data).json())
+        time.sleep(1)
+        result = b.get_task().json()
+        if result['tasks']:
+            for i in result['tasks']:
+                id = i['id']
+                data_json = i['data_json']
+                res = validate_task(id, b, data_json)
+                if res.json() != True:
+                    print('yo')
+                    res = validate_task(id, b, data_json)
+                    print(res)
+
+
+# thread_one = threading.Thread(target=loop)
+# thread_one.start()
+# thread_mine = threading.Thread(target=ddos_loop)
+# thread_mine.start()
 
 
 @app.route('/')
@@ -44,6 +78,7 @@ def index():
         coins_json = b.check_coins()
         if coins_json.json()['success']:
             coins = coins_json.json()['coins']
+        # find_user_blocks(b, user_hash)
     else:
         b = BlockChain(username=request.cookies.get('username'), password=request.cookies.get('password'),
                        base_url='https://b1.ahmetshin.com/restapi/')
@@ -53,6 +88,7 @@ def index():
             coins_json = b.check_coins()
             if coins_json.json()['success']:
                 coins = coins_json.json()['coins']
+            # find_user_blocks(b, user_hash)
     return render_template('index.html', name=name, coins=coins, user_hash=user_hash)
 
 
@@ -88,7 +124,7 @@ def send():
     name = request.cookies.get('username')
     to_hash = request.form['to_hash']
     value = request.form['value']
-    b = bs[name]
+    b = bs.get(name)
     data = {
         'type_task': 'send_coins',
         'from_hach': b.hach_user,
@@ -103,16 +139,36 @@ def send():
 def tasks():
     error = None
     name = request.cookies.get('username')
-    b = bs[name]
+    b = bs.get(name)
     response = b.get_task()
     print('response', response.json())
     return render_template('tasks.html', error=error, tasks=response.json()['tasks'])
 
 
+@app.route('/history')
+def history():
+    error = None
+    name = request.cookies.get('username')
+    b = bs.get(name)
+    blocks = find_user_blocks(b, b.hach_user)
+    print('history', blocks)
+    return render_template('history.html', error=error, blocks=blocks)
+
+
+@app.route('/history/global')
+def global_history():
+    error = None
+    name = request.cookies.get('username')
+    b = bs.get(name)
+    all_blocks = get_blocks(b)
+    # blocks = find_user_blocks(b, b.hach_user)
+    return render_template('history.html', error=error, blocks=all_blocks)
+
+
 @app.route('/validate', methods=['POST'])
 def validate():
     name = request.cookies.get('username')
-    b = bs[name]
+    b = bs.get(name)
     id = request.form['id']
     data_json = request.form['data_json']
     validate_task(id, b, data_json)
@@ -129,7 +185,89 @@ def validate_task(id, b, data_json):
     }
 
     result = b.send_task(data)
-    print(result.json())
+    return result
 
+
+def find_user_blocks(b, user_hash):
+    result = b.get_chains().json()
+    blocks = []
+    # print(result)
+    for block in result['chains']['block_active']:
+        if block['data_json']:
+            for block_in_blocks in block['data_json']:
+                block_data = block_in_blocks['data_json']
+                if block_data['type_task'] == 'send_coins':
+                    if block_data['from_hach'] == user_hash or block_data['to_hach'] == user_hash:
+                        blocks.append(block_data)
+    return blocks
+
+
+def get_blocks(b):
+    result = b.get_chains().json()
+    blocks = []
+    # print(result)
+    for block in result['chains']['block_active']:
+        if block['data_json']:
+            for block_in_blocks in block['data_json']:
+                block_data = block_in_blocks['data_json']
+                if block_data['type_task'] == 'send_coins':
+                    blocks.append(block_data)
+    return blocks
+
+
+def add_friend(b, friend_hash):
+    data = {
+        'type_task': 'custom',
+        'from_hach': b.hach_user,
+        'to_hach': friend_hash,
+        'message': ''
+    }
+    return b.send_task(data)
+
+
+@app.route('/friends/add', methods=['POST', 'GET'])
+def add_friend():
+    if request.method == 'POST':
+        name = request.cookies.get('username')
+        b = bs.get(name)
+        friend_hash = request.form['friend_hash']
+        add_friend(b, friend_hash)
+        return redirect('/friends/list')
+    else:
+        return render_template('add_friend.html')
+
+
+@app.route('/friends/list', methods=['GET'])
+def friends_list():
+    name = request.cookies.get('username')
+    b = bs.get(name)
+    friends = get_friends(b)
+    return render_template('history.html', blocks=friends)
+
+
+class Friend:
+    def __init__(self, hash):
+        self.hash = hash
+
+
+def get_friends(b):
+    result = b.get_chains().json()
+    blocks = []
+    # print(result)
+    for block in result['chains']['block_active']:
+        if block['data_json']:
+            for block_in_blocks in block['data_json']:
+                block_data = block_in_blocks['data_json']
+                if block_data['type_task'] == 'custom':
+                    if block_data['from_hach'] == b.hach_user or block_data['to_hach'] == b.hach_user:
+                        blocks.append(block_data)
+    friends = []
+    for block in blocks:
+        if block['from_hach'] == b.hach_user:
+            friend = Friend(block['to_hach'])
+            friends.append(friend)
+        else:
+            friend = Friend(block['from_hach'])
+            friends.append(friend)
+    return friends
 # flask --app main run
-

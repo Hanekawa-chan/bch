@@ -8,7 +8,13 @@
     </style>
 {% endblock %}
 {% block content %}
-    <h1>Index</h1><a href="/tasks">tasks</a>{% if name == None %}<a href="/login">login</a>{% endif %}
+    <h1>Index</h1>
+    <a href="/tasks">tasks</a>
+    <a href="/history">history</a>
+    <a href="/history/global">global history</a>
+    <a href="/friends/add">add friend</a>
+    <a href="/friends/list">friends list</a>
+    {% if name == None %}<a href="/login">login</a>{% endif %}
     <p class="important">
       Welcome to homepage{% if name != None %}, {{ name }}{% endif %}.
     </p>

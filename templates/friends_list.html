@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Friends{% endblock %}
+{% block head %}
+    {{ super() }}
+{% endblock %}
+{% block content %}
+    <h1>Friends</h1><a href="/">go back</a>
+    <hr>
+    {% for f in friends -%}
+        <p>User hash</p>
+        {{ f.hash }}
+        <hr>
+    {%- endfor %}
+{% endblock %}

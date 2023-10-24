@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Global History{% endblock %}
+{% block head %}
+    {{ super() }}
+{% endblock %}
+{% block content %}
+    <h1>Global History</h1><a href="/">go back</a>
+    <hr>
+    <turbo-frame id="messages">
+      <a href="/messages/expanded">
+        Show all expanded messages in this frame.
+      </a>
+
+      <form action="/messages">
+        Show response from this form within this frame.
+      </form>
+    </turbo-frame>
+    <hr>
+    {% for item in blocks -%}
+        <p>From hash</p>
+        {{ item.from_hach }}
+        <p>To hash</p>
+        {{ item.to_hach }}
+        <p>Coins amount</p>
+        {{ item.count_coins }}
+        <hr>
+    {%- endfor %}
+{% endblock %}

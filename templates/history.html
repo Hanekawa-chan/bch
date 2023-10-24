@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}History{% endblock %}
+{% block head %}
+    {{ super() }}
+{% endblock %}
+{% block content %}
+    <h1>History</h1><a href="/">go back</a>
+    <hr>
+    {% for item in blocks -%}
+        <p>From hash</p>
+        {{ item.from_hach }}
+        <p>To hash</p>
+        {{ item.to_hach }}
+        <p>Coins amount</p>
+        {{ item.count_coins }}
+        <hr>
+    {%- endfor %}
+{% endblock %}
