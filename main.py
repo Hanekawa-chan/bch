@@ -46,8 +46,6 @@ def ddos_loop():
             'to_hach': '0973b965a7834d82e8ea50825a54cdeca08fda0911a1c224c06e8d08060ebdb6',
             'count_coins': 100
         }
-        print('data', data)
-        print(b.send_task(data).json())
         time.sleep(1)
         result = b.get_task().json()
         if result['tasks']:
@@ -56,9 +54,7 @@ def ddos_loop():
                 data_json = i['data_json']
                 res = validate_task(id, b, data_json)
                 if res.json() != True:
-                    print('yo')
                     res = validate_task(id, b, data_json)
-                    print(res)
 
 
 # thread_one = threading.Thread(target=loop)
@@ -86,6 +82,7 @@ def index():
             bs[name] = b
             user_hash = b.hach_user
             coins_json = b.check_coins()
+            print(coins_json.json())
             if coins_json.json()['success']:
                 coins = coins_json.json()['coins']
             # find_user_blocks(b, user_hash)
@@ -220,17 +217,17 @@ def add_friend(b, friend_hash):
         'type_task': 'custom',
         'from_hach': b.hach_user,
         'to_hach': friend_hash,
-        'message': ''
+        'message': 'HI'
     }
     return b.send_task(data)
 
 
 @app.route('/friends/add', methods=['POST', 'GET'])
-def add_friend():
+def add_friend_html():
     if request.method == 'POST':
         name = request.cookies.get('username')
         b = bs.get(name)
-        friend_hash = request.form['friend_hash']
+        friend_hash = request.form['user_hash']
         add_friend(b, friend_hash)
         return redirect('/friends/list')
     else:
@@ -242,7 +239,7 @@ def friends_list():
     name = request.cookies.get('username')
     b = bs.get(name)
     friends = get_friends(b)
-    return render_template('history.html', blocks=friends)
+    return render_template('friends_list.html', blocks=friends)
 
 
 class Friend:
@@ -261,13 +258,14 @@ def get_friends(b):
                 if block_data['type_task'] == 'custom':
                     if block_data['from_hach'] == b.hach_user or block_data['to_hach'] == b.hach_user:
                         blocks.append(block_data)
-    friends = []
+    friends = {}
+    print(blocks)
     for block in blocks:
         if block['from_hach'] == b.hach_user:
             friend = Friend(block['to_hach'])
-            friends.append(friend)
+            friends[friend.hash] = friend
         else:
             friend = Friend(block['from_hach'])
-            friends.append(friend)
+            friends[friend.hash] = friend
     return friends
 # flask --app main run

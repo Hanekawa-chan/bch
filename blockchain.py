@@ -14,7 +14,7 @@ class BlockChain():
         
     def __init__(self, username, password, base_url):
         self.next=None
-        self.hard = 4
+        self.hard = 6
         self.base_url = base_url
         self.hach_version = self.__hash_string(open(Path(__file__).resolve(), mode="r", encoding="utf-8").read()) 
         self.username = username
