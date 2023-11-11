@@ -1,9 +1,8 @@
 import json
-import threading
 import time
 import uuid
+
 import urllib3
-from turbo_flask import Turbo
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 from blockchain import BlockChain
@@ -72,6 +71,7 @@ def index():
     if b is not None:
         user_hash = b.hach_user
         coins_json = b.check_coins()
+        print(coins_json.json())
         if coins_json.json()['success']:
             coins = coins_json.json()['coins']
         # find_user_blocks(b, user_hash)
@@ -119,9 +119,10 @@ def send():
     error = None
     print(error)
     name = request.cookies.get('username')
-    to_hash = request.form['to_hash']
-    value = request.form['value']
+    to_hash = request.json['to_hash']
+    value = request.json['value']
     b = bs.get(name)
+    print(to_hash, value)
     data = {
         'type_task': 'send_coins',
         'from_hach': b.hach_user,
@@ -222,29 +223,45 @@ def add_friend(b, friend_hash):
     return b.send_task(data)
 
 
-@app.route('/friends/add', methods=['POST', 'GET'])
+@app.route('/friends/add', methods=['POST'])
 def add_friend_html():
     if request.method == 'POST':
         name = request.cookies.get('username')
         b = bs.get(name)
-        friend_hash = request.form['user_hash']
+        friend_hash = request.json['user_hash']
         add_friend(b, friend_hash)
-        return redirect('/friends/list')
-    else:
-        return render_template('add_friend.html')
+        return "OK"
 
 
 @app.route('/friends/list', methods=['GET'])
 def friends_list():
     name = request.cookies.get('username')
     b = bs.get(name)
-    friends = get_friends(b)
-    return render_template('friends_list.html', blocks=friends)
+    # friends = get_friends(b)
+    friends = [Friend("adachi")]
+    print(friends)
+    return render_template('friends_list.html', friends=friends)
+
+
+@app.route('/friends/list/<name>', methods=['GET'])
+def messages_list(name):
+    username = request.cookies.get('username')
+    b = bs.get(username)
+    # messages = get_messages(b, name)
+    messages = [Message('adachi', "Hi")]
+    return render_template('messages_list.html', messages=messages)
 
 
 class Friend:
     def __init__(self, hash):
         self.hash = hash
+        self.link = "/friends/list/"+hash
+
+
+class Message:
+    def __init__(self, hash, value):
+        self.hash = hash
+        self.value = value
 
 
 def get_friends(b):
@@ -258,14 +275,34 @@ def get_friends(b):
                 if block_data['type_task'] == 'custom':
                     if block_data['from_hach'] == b.hach_user or block_data['to_hach'] == b.hach_user:
                         blocks.append(block_data)
-    friends = {}
+    friends = []
     print(blocks)
     for block in blocks:
         if block['from_hach'] == b.hach_user:
             friend = Friend(block['to_hach'])
-            friends[friend.hash] = friend
+            friends.append(friend)
         else:
             friend = Friend(block['from_hach'])
-            friends[friend.hash] = friend
+            friends.append(friend)
     return friends
+
+
+def get_messages(b, friend_hash):
+    result = b.get_chains().json()
+    blocks = []
+    # print(result)
+    for block in result['chains']['block_active']:
+        if block['data_json']:
+            for block_in_blocks in block['data_json']:
+                block_data = block_in_blocks['data_json']
+                if block_data['type_task'] == 'custom':
+                    if ((block_data['from_hach'] == b.hach_user or block_data['to_hach'] == b.hach_user) and
+                            (block_data['from_hach'] == friend_hash or block_data['to_hach'] == friend_hash)):
+                        blocks.append(block_data)
+    messages = []
+    print(blocks)
+    for block in blocks:
+        message = Message(block['from_hach'], block["data"])
+        messages.append(message)
+    return messages
 # flask --app main run

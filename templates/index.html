@@ -12,7 +12,6 @@
     <a href="/tasks">tasks</a>
     <a href="/history">history</a>
     <a href="/history/global">global history</a>
-    <a href="/friends/add">add friend</a>
     <a href="/friends/list">friends list</a>
     {% if name == None %}<a href="/login">login</a>{% endif %}
     <p class="important">
@@ -27,10 +26,44 @@
         {{ coins }} coins
         <hr>
         <p>send coins</p>
-        <form action="/send" method="post">
+        <form id="sendCoins" method="post" onsubmit="return false">
             <p>{{ input_field('to_hash') }}</p>
             <p>{{ input_field('value', type='numeric') }}</p>
             <input type="submit" value="send"/>
         </form>
     {% endif %}
+    <h1>Add friend</h1><a href="/">go back</a>
+    <form id="addFriend" method="post" onsubmit="return false">
+        <p>{{ input_field('user_hash') }}</p>
+        <input type="submit" value="enter"/>
+    </form>
+    <script>
+        $('#addFriend').on("submit", function () {
+            let user_hash = $('input[name="user_hash"]').val()
+            console.log("add friend", user_hash)
+            $.ajax({
+                type: "POST",
+                url: "/friends/add",
+                contentType: "application/json",
+                data: JSON.stringify({"user_hash": user_hash}),
+                success: function(data) {
+                    console.log(data)
+                }
+            })
+        })
+        $('#sendCoins').on("submit", function () {
+            let to_hash = $('input[name="to_hash"]').val()
+            let value = $('input[name="value"]').val()
+            console.log("send coins", to_hash, value)
+            $.ajax({
+                type: "POST",
+                url: "/send",
+                contentType: "application/json",
+                data: JSON.stringify({"to_hash": to_hash, "value": value}),
+                success: function(data) {
+                    console.log(data)
+                }
+            })
+        })
+    </script>
 {% endblock %}

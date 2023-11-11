@@ -4,12 +4,13 @@
     {{ super() }}
 {% endblock %}
 {% block content %}
-    <h1>Friends</h1><a href="/">go back</a>
+    <h1>Messages</h1><a href="/">go back</a>
     <hr>
-    {% for f in friends -%}
+    {% for m in messages -%}
         <p><b>User hash</b></p>
-        {{ f.hash }}
-        <a href={{ f.link }}>messages</a>
+        {{ m.hash }}
+        <p><b>Message</b></p>
+        {{ m.value }}
         <hr>
     {%- endfor %}
 {% endblock %}
