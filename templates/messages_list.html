@@ -13,4 +13,24 @@
         {{ m.value }}
         <hr>
     {%- endfor %}
+     <form id="sendMessage" method="post" onsubmit="return false">
+         <p>{{ input_field('message') }}</p>
+         <input type="submit" value="enter"/>
+    </form>
+    <script>
+        $('#sendMessage').on("submit", function () {
+            let url = {{ url }}
+            let message = $('input[name="message"]').val()
+            console.log("send message to the friend", user_hash)
+            $.ajax({
+                type: "POST",
+                url: url,
+                contentType: "application/json",
+                data: JSON.stringify({"user_hash": user_hash}),
+                success: function(data) {
+                    console.log(data)
+                }
+            })
+        })
+    </script>
 {% endblock %}

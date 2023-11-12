@@ -214,11 +214,15 @@ def get_blocks(b):
 
 
 def add_friend(b, friend_hash):
+    return send_message(b, friend_hash, message='HI')
+
+
+def send_message(b, friend_hash, message):
     data = {
         'type_task': 'custom',
         'from_hach': b.hach_user,
         'to_hach': friend_hash,
-        'message': 'HI'
+        'message': message
     }
     return b.send_task(data)
 
@@ -249,7 +253,7 @@ def messages_list(name):
     b = bs.get(username)
     # messages = get_messages(b, name)
     messages = [Message('adachi', "Hi")]
-    return render_template('messages_list.html', messages=messages)
+    return render_template('messages_list.html', messages=messages, )
 
 
 class Friend:
@@ -302,7 +306,7 @@ def get_messages(b, friend_hash):
     messages = []
     print(blocks)
     for block in blocks:
-        message = Message(block['from_hach'], block["data"])
+        message = Message(block['from_hach'], block["message"])
         messages.append(message)
     return messages
 # flask --app main run
