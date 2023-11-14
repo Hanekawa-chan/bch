@@ -12,6 +12,8 @@
         {{ m.hash }}
         <p><b>Message</b></p>
         {{ m.value }}
+        <p><b>Crypted</b></p>
+        {{ m.crypted }}
         <hr>
     {%- endfor %}
     <form id="sendMessage" method="post" onsubmit="return false">

@@ -258,12 +258,14 @@ class Message:
         self.hash = hash
         if type(value) is str:
             self.value = value
+            self.crypted = False
         else:
             data = {
                 'private_key': 'piss',
                 'encrypted_object': value
             }
             self.value = b.decrypt(data).json()
+            self.crypted = True
 
 
 def get_friends(b):
