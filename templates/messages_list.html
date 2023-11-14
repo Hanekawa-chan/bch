@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from 'base.html' import input as input_field%}
 {% block title %}Friends{% endblock %}
 {% block head %}
     {{ super() }}
@@ -13,20 +14,21 @@
         {{ m.value }}
         <hr>
     {%- endfor %}
-     <form id="sendMessage" method="post" onsubmit="return false">
-         <p>{{ input_field('message') }}</p>
-         <input type="submit" value="enter"/>
+    <form id="sendMessage" method="post" onsubmit="return false">
+        <p>{{ input_field('message') }}</p>
+        <p>{{ input_field('crypted', type='checkbox')}}</p>
+        <input type="submit" value="enter"/>
     </form>
     <script>
         $('#sendMessage').on("submit", function () {
             let url = {{ url }}
             let message = $('input[name="message"]').val()
-            console.log("send message to the friend", user_hash)
+            let crypted = $('input[name="crypted"]').is(":checked")
             $.ajax({
                 type: "POST",
                 url: url,
                 contentType: "application/json",
-                data: JSON.stringify({"user_hash": user_hash}),
+                data: JSON.stringify({"message": message, "crypted":crypted}),
                 success: function(data) {
                     console.log(data)
                 }

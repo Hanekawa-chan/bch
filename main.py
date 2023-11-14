@@ -1,3 +1,5 @@
+from blockchain import BlockChain
+from flask import Flask, render_template, request, redirect, make_response
 import json
 import time
 import uuid
@@ -5,31 +7,11 @@ import uuid
 import urllib3
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-from blockchain import BlockChain
-from flask import Flask, render_template, request, redirect, make_response
 
 link_client = 'https://b1.ahmetshin.com/static/blockchain.py'
 bs = {}
 
 app = Flask(__name__)
-
-fake_users = [BlockChain(username='fake_user_1', password='fake_user_1', base_url='https://b1.ahmetshin.com/restapi/'),
-              BlockChain(username='fake_user_2', password='fake_user_2', base_url='https://b1.ahmetshin.com/restapi/'),
-              BlockChain(username='fake_user_3', password='fake_user_3', base_url='https://b1.ahmetshin.com/restapi/'),
-              BlockChain(username='fake_user_4', password='fake_user_4', base_url='https://b1.ahmetshin.com/restapi/'),
-              BlockChain(username='fake_user_5', password='fake_user_5', base_url='https://b1.ahmetshin.com/restapi/')]
-
-
-def loop():
-    while True:
-        for b in fake_users:
-            time.sleep(5)
-            result = b.get_task().json()
-            if result['tasks']:
-                for i in result['tasks']:
-                    id = i['id']
-                    data_json = i['data_json']
-                    validate_task(id, b, data_json)
 
 
 def ddos_loop():
@@ -56,8 +38,6 @@ def ddos_loop():
                     res = validate_task(id, b, data_json)
 
 
-# thread_one = threading.Thread(target=loop)
-# thread_one.start()
 # thread_mine = threading.Thread(target=ddos_loop)
 # thread_mine.start()
 
@@ -233,39 +213,57 @@ def add_friend_html():
         name = request.cookies.get('username')
         b = bs.get(name)
         friend_hash = request.json['user_hash']
-        add_friend(b, friend_hash)
-        return "OK"
+        return add_friend(b, friend_hash).json()
 
 
 @app.route('/friends/list', methods=['GET'])
 def friends_list():
     name = request.cookies.get('username')
     b = bs.get(name)
-    # friends = get_friends(b)
-    friends = [Friend("adachi")]
+    friends = get_friends(b)
+    # friends = [Friend("adachi")]
     print(friends)
     return render_template('friends_list.html', friends=friends)
 
 
-@app.route('/friends/list/<name>', methods=['GET'])
+@app.route('/friends/list/<name>', methods=['GET', 'POST'])
 def messages_list(name):
     username = request.cookies.get('username')
     b = bs.get(username)
-    # messages = get_messages(b, name)
-    messages = [Message('adachi', "Hi")]
-    return render_template('messages_list.html', messages=messages, )
+    if request.method == 'GET':
+        messages = get_messages(b, name)
+        # messages = [Message('adachi', "Hi")]
+        return render_template('messages_list.html', messages=messages, url="/friends/list/" + name)
+    else:
+        friend_hash = name
+        if request.json["crypted"]:
+            data = {
+                'private_key': 'piss',
+                'text': request.json["message"]
+            }
+            result = b.encrypt(data)
+            return send_message(b, friend_hash, result.json()).json()
+        else:
+            return send_message(b, friend_hash, request.json["message"]).json()
 
 
 class Friend:
     def __init__(self, hash):
         self.hash = hash
-        self.link = "/friends/list/"+hash
+        self.link = "/friends/list/" + hash
 
 
 class Message:
-    def __init__(self, hash, value):
+    def __init__(self, b, hash, value):
         self.hash = hash
-        self.value = value
+        if type(value) is str:
+            self.value = value
+        else:
+            data = {
+                'private_key': 'piss',
+                'encrypted_object': value
+            }
+            self.value = b.decrypt(data).json()
 
 
 def get_friends(b):
@@ -306,7 +304,7 @@ def get_messages(b, friend_hash):
     messages = []
     print(blocks)
     for block in blocks:
-        message = Message(block['from_hach'], block["message"])
+        message = Message(b, block['from_hach'], block["message"])
         messages.append(message)
     return messages
 # flask --app main run

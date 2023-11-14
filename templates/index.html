@@ -32,9 +32,16 @@
             <input type="submit" value="send"/>
         </form>
     {% endif %}
-    <h1>Add friend</h1><a href="/">go back</a>
+    <h1>Add friend</h1>
     <form id="addFriend" method="post" onsubmit="return false">
         <p>{{ input_field('user_hash') }}</p>
+        <input type="submit" value="enter"/>
+    </form>
+    <h1>Send message</h1>
+    <form id="sendMessage" method="post" onsubmit="return false">
+        <p>{{ input_field('friend') }}</p>
+        <p>{{ input_field('message') }}</p>
+        <p>{{ input_field('crypted', type='checkbox')}}</p>
         <input type="submit" value="enter"/>
     </form>
     <script>
@@ -60,6 +67,21 @@
                 url: "/send",
                 contentType: "application/json",
                 data: JSON.stringify({"to_hash": to_hash, "value": value}),
+                success: function(data) {
+                    console.log(data)
+                }
+            })
+        })
+        $('#sendMessage').on("submit", function () {
+            let user_hash = $('input[name="friend"]').val()
+            let message = $('input[name="message"]').val()
+            let crypted = $('input[name="crypted"]').is(":checked")
+            console.log('crypted',crypted)
+            $.ajax({
+                type: "POST",
+                url: '/friends/list/'+user_hash,
+                contentType: "application/json",
+                data: JSON.stringify({"message": message, "crypted":crypted}),
                 success: function(data) {
                     console.log(data)
                 }
